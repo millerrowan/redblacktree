@@ -15,7 +15,7 @@ node::node(int value) {
     left = NULL;
     right = NULL;
     data = value; 
-    parent = NULL
+    parent = NULL;
 }
 node::~node() {
     
