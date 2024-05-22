@@ -5,10 +5,10 @@
 
 using namespace std;
 
-void insert(node* &root, node* &node, int data);
-void insertFix(node* &root, node* &node);
-void rotateRight(node* &root, node* &parent);
-void rotateLeft(node* &root, node* &parent); 
+void insert(node* &root, node* p, node* current, int data);
+void insertFix(node* &root, node* current);
+void rotateRight(node* &root, node* p);
+void rotateLeft(node* &root, node* p); 
 void print(node* root, int count);
 
 int main() {
@@ -25,7 +25,7 @@ int main() {
     cout << "Enter ADD, PRINT, DELETE, SEARCH, or QUIT" << endl;
     cin >> input; 
     
-       /* if(strcmp(input, "ADD")==0) {
+        if(strcmp(input, "ADD")==0) {
             char input2[20]; 
             cout << "input from file or manual?";
             cout << "Enter 'FILE' or 'MANUAL'" << endl;
@@ -40,7 +40,7 @@ int main() {
 	            fin.open(fileName);
 	            int input1;
 	            while(fin >> input1) {
-	            insert(root, root, input1);
+	            insert(root, root, root, input1);
 	            }
 
             }
@@ -48,15 +48,15 @@ int main() {
             if(strcmp(input, "MANUAL")==0) {
 	            cout << "Type a number between 1 and 999" << endl;
                 cin >> mannum;
-                insert(root, root, mannum);
+                insert(root, root, root, mannum);
             }
 
-        } */
+        } 
 
-       /* if(strcmp(input, "PRINT")==0) {
+        if(strcmp(input, "PRINT")==0) {
             print(root, 0);
 
-        }    */
+        }    
         /*
         if(strcmp(input, "DELETE")==0) {
             cout << "what number would you like to delete?" << endl; 
@@ -77,9 +77,9 @@ int main() {
       
         } */
     
-       /* if(strcmp(input, "QUIT")==0) {
+        if(strcmp(input, "QUIT")==0) {
             stillPlaying = false; 
-        } */
+        } 
     }
   
 }
@@ -92,149 +92,209 @@ int main() {
  //Both children of every red node are black.
 // Every simple path from a given node to any of its descendant leaves contains the same number of black nodes.
 
-void insert(node* &root, node* &node, int data) {
-    node* p = NULL;
-    node* temp = root; 
-    node->setValue(data);
+void insert(node* &root, node* p, node* current, int data) {
+    cout << "insert" << endl;
+    //n->setValue(data);
+    //if root is NULL 
+    if(root == NULL) {
+        root = new node(data); 
+        root->setLeft(NULL);
+        root->setRight(NULL);
+        root->setColor(1);
+        return;
+    }
     //while root is not NULL
-    while(temp != NULL) {
-        p = temp;
-        if(node->getValue() < temp->getValue()){
-            temp = temp->getLeft();
+    else if(current == NULL) {
+        current = new node(data); 
+        current->setColor(0);
+        if(data > p->getValue()) {
+            p->setRight(current);
         }
-        else {
-            temp = temp->getRight(); 
+        else{
+            p->setLeft(current);
         }
+        current->parent = p; 
+        insertFix(root, current);
     }
-    node->parent = p;
-    node->setColor(0);
-    //if newly added node is the root
-    if(p == NULL) {
-        p->setLeft(node);
-    }
-    //if data of child is less than parent
-    else if(node->getValue() < p->getValue()) {
-        p->setLeft(node);
-        
+    
+    else if(data <= current->getValue()) {
+        node* l = current->getLeft();
+        insert(root, current, l, data); 
     }
     else {
-        p->setRight(node);
+        node* r = current->getRight();
+        insert(root, current, r, data); 
     }
-    node->setRight(NULL);
-    node->setLeft(NULL);
-    
-    insertFix(root, node);
-    
-    
 }
 
-void insertFix(node* &root, node* &node) {
+//credit: https://www.codesdope.com/course/data-structures-red-black-trees-insertion/
+void insertFix(node* &root, node* current) {
     //while node's parent is red
-    while(node->parent->getColor() == 0) {
-        //if node's parent is the left child
-        if(node->parent == node->parent->parent->getLeft()) {
-            node* uncle = node->parent->parent->getRight(); 
+    bool stillRunning = true;
+   // while(stillRunning == true) {
+    while(current->parent->getColor() == 0) {
+        cout << "parent is red" << endl;
+         //if node's parent is the left child
+        if(current->parent == current->parent->parent->getLeft()) {
+            cout<< "parent is the left child" << endl;
+            node* uncle = current->parent->parent->getRight(); 
             
             //case 1: if the uncle is red
-            if(uncle->getColor() == 0) {
-                node->parent->setColor(1);
+            if(uncle != NULL && uncle->getColor() == 0) {
+                cout << "uncle is red" << endl;
+                if (current->parent->parent==NULL) {
+                    cout << "GRANDPA NULL" << endl;
+                }
+                current->parent->setColor(1);
                 uncle->setColor(1);
-                node->parent->parent->setColor(0);
-                node = node->parent->parent; 
+                if(current->parent->parent != root) {
+                    current->parent->parent->setColor(0);
+                    current = current->parent->parent;
+                }
+                else {
+                    
+                    return;
+                }
+                
+                //current = current->parent->parent; 
+                cout << "line 148" << endl;
             }
-            //case 2 or 3
+            //case 2
             else {
                 //case 2: if the uncle of node is black and the node is the right child
-                if(node == node->parent->getRight()) {
-                    node = node->parent; 
-                    rotateLeft(root, node); 
+                if(current == current->parent->getRight()) {
+                    cout << "case 2" << endl;
+                    current = current->parent; 
+                    rotateLeft(root, current); 
                 }
-                //case 3: if the uncle of node is black and the node is left child
-                node->parent->setColor(1);
-                node->parent->parent->setColor(0);
-                rotateRight(root, node->parent->parent); 
+                //if the uncle of node is black and the node is left child
+                else {
+                    cout << "case 3" << endl;
+                    current->parent->setColor(1);
+                    current->parent->parent->setColor(0);
+                    rotateRight(root, current->parent->parent); 
+                }
             }
                 
         }
         //if node's parent is the right child
         else {
-            node* uncle = node->parent->parent->getLeft();
+            cout << "parent is right child" << endl;
+            node* uncle = current->parent->parent->getLeft();
              //case 1: if the uncle is red
-            if(uncle->getColor == 0) {
-                node->parent->setColor(1); 
-                uncle->setColor(1)l 
-                node->parent->parent->setColor(0);
-                node = node->parent->parent;
-                
-            }
-            //case 2 or 3
-            else {
-                //case 2: if the uncle of node is black and the node is the right child
-                if(node == node->parent->getLeft()) {
-                    node = node->parent;
-                    rotateRight(root, node);
+            if(uncle != NULL && uncle->getColor() == 0) {
+                cout << "case 1 r" << endl;
+                if (current->parent->parent==NULL) {
+                    cout << "GRANDPA NULL" << endl;
                 }
-                //case 3: if the uncle of node is black and the node is left child
-                node->parent->setColor(1);
-                node->parent->parent->setColor(0);
-                rotateLeft(root, node->parent->parent);
+                current->parent->setColor(1);
+                uncle->setColor(1);
+                if(current->parent->parent != root) {
+                    cout << "here1" << endl;
+                    current->parent->parent->setColor(0);
+                    //current = current->parent->parent;
+                }
+                else {
+                    cout << "here 3" << endl;
+                    return;
+                }
+                //current->parent->parent->setColor(0);
+                cout << "here2" << endl; 
+                current = current->parent->parent;
+                cout << "current" << current->getValue() << endl;
+                insertFix(root, current);
+                return;
+            }
+            //if uncle is black
+            else {
+                //if the uncle of node is black and the node is the Left child
+                if(current == current->parent->getLeft()) {
+                    cout << "case2r" << endl;
+                    current = current->parent;
+                    rotateRight(root, current);
+                    print(root, 0);
+                }
+                //else {
+                //if the uncle of node is black and the node is Right child
+                    cout << "case3r" << endl; 
+                    current->parent->setColor(1);
+                    //if(current->getRight() != NULL) {
+                     //   current->getRight()->setColor(0); 
+                   // } 
+                    current->parent->parent->setColor(0);
+                    cout << "current parent parent" << current->parent->parent->getValue() << endl;
+                    rotateLeft(root, current->parent->parent);
+                    cout << "parent color" << current->parent->getColor() << endl;
+                    print(root, 0);
+                //}
             }
         }
         
     }
+    cout << "exited while loop" << endl;
     root->setColor(1);
     
 }
 
-void rotateLeft(node* &root, node* & parent) {
-    node* y = parent->getRight(); 
-    parent->setRight(y->getLeft); 
+void rotateLeft(node* &root, node* p) {
+    cout << "rotate left" << endl; 
+    node* y = p->getRight(); 
+    p->setRight(y->getLeft()); 
+   
     if(y->getLeft() != NULL) {
-        y->getLeft->parent = parent;
+        y->getLeft()->parent = p;
     }
-    y->parent = parent->parent;
+    y->parent = p->parent;
     //parent is root
-    if(parent->parent == NULL) {
+    if(p->parent == NULL) {
         root = y;
     }
     //parent is left child
-    else if(parent == parent->parent->getLeft()) {
-        parent->parent->setLeft(y);
+    else if(p == p->parent->getLeft()) {
+        p->parent->setLeft(y);
         
     }
     //is parent is right child
     else {
-        parent->parent->setRight(y);
+        p->parent->setRight(y);
     }
-    y->setLeft(y);
-    parent->parent = y; 
+    y->setLeft(p);
+    p->parent = y; 
     
     
 }
 
-void rotateRight(node* &root, node* parent) {
-    node* y = parent->getLeft();
-    parent->setLeft(y->getRight()); 
+void rotateRight(node* &root, node* p) {
+    cout << "rotate right" << endl; 
+    node* y = p->getLeft();
+    //if(y != NULL) { 
+        p->setLeft(y->getRight());
+    //}
     //if right doesn't exist
     if(y->getRight() != NULL) {
-        y->getRight->parent = parent; 
+        cout << "here1" << endl;
+        y->getRight()->parent = p; 
     }
-    y->parent = parent->parent; 
+    y->parent = p->parent; 
     //if parent is root
-    if(parent->parent == NULL) {
+    if(p->parent == NULL) {
+        cout << "here2" << endl;
         root = y; 
     }
     //if parent is left child
-    else if(parent == parent->parent->getRight()) {
-        parent->parent->setRight(y);
+    else if(p == p->parent->getRight()) {
+        cout << "here3" << endl;
+        p->parent->setRight(y);
         
     }
     //if parent is right child
     else {
-        x->parent->setLeft(y);
+        cout << "here4" << endl;
+        p->parent->setLeft(y);
     }
-    y->setRight(parent);
-    parent->parent = y;
+    y->setRight(p);
+    p->parent = y;
+    cout << "end of rotate right" << endl;
     
 }
 

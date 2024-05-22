@@ -17,6 +17,7 @@ class node {
     int getValue();
     void setColor(int colort);
     int getColor();
+    node* parent;
     
     private:
     int data;
@@ -25,6 +26,7 @@ class node {
     node* newright;
     node* right;
     node* left;
+
     
 };
 
