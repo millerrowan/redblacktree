@@ -9,7 +9,10 @@ void insert(node* &root, node* p, node* current, int data);
 void insertFix(node* &root, node* current);
 void rotateRight(node* &root, node* p);
 void rotateLeft(node* &root, node* p); 
+void deletion(node* &root, node* current, node* p);
+void deleteFix();
 void print(node* root, int count);
+bool search(int searched, node* root);
 
 int main() {
     bool stillPlaying = true;
@@ -57,11 +60,10 @@ int main() {
             print(root, 0);
 
         }    
-        /*
         if(strcmp(input, "DELETE")==0) {
             cout << "what number would you like to delete?" << endl; 
             cin >> n; 
-            remove(root, root, root, n);
+            deletion(root, root, root, n);
         }
         if(strcmp(input, "SEARCH")==0) {
         
@@ -298,6 +300,88 @@ void rotateRight(node* &root, node* p) {
     
 }
 
+//programiz
+void deletion(node* &root, node* p, node* current, int n) {
+  
+  
+    if(root == NULL) {
+        cout << "there is nothing to delete" << endl;
+    }
+    //if the current value == the value to be deleted
+    if(current->getValue == n) {
+        node y = current; 
+        int originalColor = current->getColor();
+        node* x;
+        
+        //if current's left is NULL
+        if(current->getLeft() == NULL) {
+        current->setRight(x);
+        transplant(current, x); //current is replaced with x
+        }
+        //if current's right is NULL
+        else if(current->getRight() == NULL) {
+            current->setLeft(x);
+            transplant(current, x); //current is replaced with x
+        }
+        //if current's left and right are not NULL
+        else {
+            y = minimum(current->getRight()); //y is smallest element is subtree
+            originalColor = y->getColor();
+            y->setRight(x);
+            if(y->parent == current) { //if y's parent == the node to be deleted
+                x->parent = y;
+            }
+            else {
+                transplant(y, y->getRight());
+                y->setRight(current->getRight());
+                y->getRight()->parent = y;
+            }
+            transplant(current, y);
+            y->setLeft(current->getLeft());
+            y->getLeft()->parent = y;
+            y->setColor(current->getColor()); 
+        }
+        if(originalColor == 1) {
+            deleteFix(root, x);
+        }
+    }
+    
+    else if(n < current->getValue()) {
+        return deletion(root, p, current->getLeft(), n);
+    }
+    else {
+        return deletion(root, p, current->getRight(), n);
+    }
+}
+
+void deleteFix() {
+    
+    
+}
+
+node* minimum(node* current) {
+    while(current->getLeft() != NULL) {
+        current = current->getLeft();
+    }
+    return node; 
+}
+
+void transplant(node* &root, node* &current, node* &v) {
+    //current is root
+    if(current->parent == NULL) {
+        root = v;
+    }
+    //if current is left child
+    else if(current == current->parent->getLeft()) {
+        current->parent->setLeft(v);
+    }
+    //if current is right child
+    else {
+        current->parent->setRight(v));
+    }
+    v->parent = current->parent; 
+}
+
 void print(node* root, int count) {
     if(root == NULL) {
         return;
@@ -317,3 +401,25 @@ void print(node* root, int count) {
         print(root->getLeft(), count+1); 
     }
 }
+
+bool search(int searched, node* root) {
+    //if root doesnt exist
+    if(root == NULL) {
+        return false; 
+    }
+    //if root equals the value searched
+    if(root->getValue() == searched) {
+        return true; 
+    }
+    //if root value is less than search value
+    if(root->getValue() > searched) {
+        //call search again but pass in left child
+        node* left = root->getLeft();
+        return(search(searched, left));
+    }
+    //if root value is greater than search value
+    if(root->getValue() < searched) {
+        //call search again but pass in right child
+        node* right = root->getRight();
+        return(search(searched, right)); 
+    }
