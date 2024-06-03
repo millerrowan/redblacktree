@@ -9,10 +9,13 @@ void insert(node* &root, node* p, node* current, int data);
 void insertFix(node* &root, node* current);
 void rotateRight(node* &root, node* p);
 void rotateLeft(node* &root, node* p); 
-void deletion(node* &root, node* current, node* p);
-void deleteFix();
+void deletion(node* &root, node* current, int n);
+void deleteFix(node* &root,node* current);
+node* minimum(node* current); 
 void print(node* root, int count);
 bool search(int searched, node* root);
+void transplant(node* &root, node* current, node* v); 
+
 
 int main() {
     bool stillPlaying = true;
@@ -59,25 +62,26 @@ int main() {
         if(strcmp(input, "PRINT")==0) {
             print(root, 0);
 
-        }    
+        }  
+        
         if(strcmp(input, "DELETE")==0) {
             cout << "what number would you like to delete?" << endl; 
             cin >> n; 
-            deletion(root, root, root, n);
+            deletion(root, root, n);
         }
         if(strcmp(input, "SEARCH")==0) {
         
-        cout << "what number are you searching for?" << endl;
-        cin >> searched;
-        bool inTree = search(searched, root);
-        if(inTree == false) {
-          cout << "your number is not in the tree" << endl;
-        }
-        else if(inTree == true) {
-            cout << "your number is in the tree" << endl;
-        } 
+            cout << "what number are you searching for?" << endl;
+            cin >> searched;
+            bool inTree = search(searched, root);
+            if(inTree == false) {
+                 cout << "your number is not in the tree" << endl;
+            }
+            else if(inTree == true) {
+                cout << "your number is in the tree" << endl;
+            } 
       
-        } */
+        } 
     
         if(strcmp(input, "QUIT")==0) {
             stillPlaying = false; 
@@ -238,6 +242,158 @@ void insertFix(node* &root, node* current) {
     
 }
 
+//programiz
+void deletion(node* &root, node* current, int n) { //0 is red, 1 is black
+    cout << "deleting" << n << endl;
+  
+    if(root == NULL) {
+        cout << "there is nothing to delete" << endl;
+        return; 
+    }
+    if(n < current->getValue()) {
+        cout << "left" << endl;
+        return deletion(root, current->getLeft(), n);
+    }
+    else if(n > current->getValue()) {
+        cout << "right" << endl;
+        return deletion(root, current->getRight(), n);
+    }
+    //if the current value == the value to be deleted
+    else {
+        cout << "current valee = n" << endl;
+        node* y = current; 
+        int originalColor = current->getColor();
+        node* x;
+        
+        //if current's left is NULL
+        if(current->getLeft() == NULL) { //you checked that current and x don't equal null
+            cout << "current left is null" << endl;
+            x = current->getRight(); 
+            cout << "hi" << endl;
+            if(x == NULL) {
+                cout << "x is NULL" << endl;
+            }
+            transplant(root, current, x);//current is replaced with x
+            current->parent->setLeft(NULL); 
+            cout << "after transplant" << endl;
+            //cout << "root: " << root->getValue() << "current: " << current->getValue() << "x: " << x->getValue() << endl;
+        }
+        //if current's right is NULL
+        else if(current->getRight() == NULL) {
+            cout << "current right is null" << endl; 
+            x = current->getLeft(); 
+            //current->setLeft(x);
+            transplant(root, current, x); //current is replaced with x
+            current->parent->setRight(NULL);
+        }
+        //if current's left and right are not NULL
+        else {
+            cout << "currents right and left are not null" << endl;
+            y = minimum(current->getRight()); //y is smallest element is subtree
+            originalColor = y->getColor();
+            x = y->getRight(); 
+            cout << "yvalue: " << y->getValue();
+            cout << "xvalue: " << x->getValue();
+            
+            
+            if(y->parent == current) { //if y's parent == the node to be deleted
+                cout << "y's parent is current" << endl; 
+                x->parent = y;
+            }
+            
+            else {
+                cout << "else" << endl; 
+                transplant(root, y, y->getRight());
+                y->setRight(current->getRight());
+                y->getRight()->parent = y;
+            }
+            
+            cout << "here" << endl;
+            transplant(root, current, y);
+            y->setLeft(current->getLeft());
+            y->getLeft()->parent = y;
+            y->setColor(current->getColor()); 
+        }
+        
+        if(originalColor == 1) {
+            cout << "original color is black" << endl;
+            deleteFix(root, x);
+        }
+    }
+  
+}
+
+//rebalances tree after deletion and fixes coloring 
+void deleteFix(node* &root, node* current) {
+    cout << "delete fix" << endl;
+    node* w = NULL; 
+    while(current != root && current->getColor() != 1) {
+        if(current = current->parent->getLeft()) {
+            current->parent->setRight(w);
+            if(current->parent->getRight()->getColor() == 0) {
+                current->parent->getRight()->setColor(1);
+                current->parent->setColor(0); 
+                rotateLeft(root, current->parent);
+                current->parent->setRight(w);
+            }
+            
+            if(w->getRight()->getColor() == 1 && w->getLeft()->getColor() == 1) {
+                w->setColor(0);
+                current = current->parent; 
+            }
+            else{
+                if(w->getRight()->getColor() == 1) {
+                    w->getLeft()->setColor(1);
+                    w->setColor(0);
+                    rotateRight(root, w);
+                    current->parent->setRight(w);
+                }
+                w->setColor(current->parent->getColor());
+                current->parent->parent->setColor(1);
+                w->getRight()->setColor(1);
+                rotateLeft(root, current->parent); 
+                root = current; 
+                
+            }
+            
+        }
+        else if(current = current->parent->getRight()) {
+            current->parent->setLeft(w);
+            if(current->parent->getLeft()->getColor() == 0) {
+                current->parent->getLeft()->setColor(1);
+                current->parent->setColor(0); 
+                rotateRight(root, current->parent);
+                current->parent->setLeft(w);
+            }
+            
+            if(w->getLeft()->getColor() == 1 && w->getRight()->getColor() == 1) {
+                w->setColor(0);
+                current = current->parent; 
+            }
+            else{
+                if(w->getLeft()->getColor() == 1) {
+                    w->getRight()->setColor(1);
+                    w->setColor(0);
+                    rotateLeft(root, w);
+                    current->parent->setLeft(w);
+                }
+                w->setColor(current->parent->getColor());
+                current->parent->parent->setColor(1);
+                w->getLeft()->setColor(1);
+                rotateRight(root, current->parent); 
+                root = current; 
+                
+            }
+            
+        }
+        
+        current->setColor(1);
+        
+    }    
+    
+    
+}
+
 void rotateLeft(node* &root, node* p) {
     cout << "rotate left" << endl; 
     node* y = p->getRight(); 
@@ -300,86 +456,40 @@ void rotateRight(node* &root, node* p) {
     
 }
 
-//programiz
-void deletion(node* &root, node* p, node* current, int n) {
-  
-  
-    if(root == NULL) {
-        cout << "there is nothing to delete" << endl;
-    }
-    //if the current value == the value to be deleted
-    if(current->getValue == n) {
-        node y = current; 
-        int originalColor = current->getColor();
-        node* x;
-        
-        //if current's left is NULL
-        if(current->getLeft() == NULL) {
-        current->setRight(x);
-        transplant(current, x); //current is replaced with x
-        }
-        //if current's right is NULL
-        else if(current->getRight() == NULL) {
-            current->setLeft(x);
-            transplant(current, x); //current is replaced with x
-        }
-        //if current's left and right are not NULL
-        else {
-            y = minimum(current->getRight()); //y is smallest element is subtree
-            originalColor = y->getColor();
-            y->setRight(x);
-            if(y->parent == current) { //if y's parent == the node to be deleted
-                x->parent = y;
-            }
-            else {
-                transplant(y, y->getRight());
-                y->setRight(current->getRight());
-                y->getRight()->parent = y;
-            }
-            transplant(current, y);
-            y->setLeft(current->getLeft());
-            y->getLeft()->parent = y;
-            y->setColor(current->getColor()); 
-        }
-        if(originalColor == 1) {
-            deleteFix(root, x);
-        }
-    }
-    
-    else if(n < current->getValue()) {
-        return deletion(root, p, current->getLeft(), n);
-    }
-    else {
-        return deletion(root, p, current->getRight(), n);
-    }
-}
-
-void deleteFix() {
-    
-    
-}
 
 node* minimum(node* current) {
+    cout << "minimum" << endl;
     while(current->getLeft() != NULL) {
         current = current->getLeft();
     }
-    return node; 
+    return current; 
 }
 
-void transplant(node* &root, node* &current, node* &v) {
-    //current is root
+void transplant(node* &root, node* current, node* v) {
+    cout << "transplant" << endl;
     if(current->parent == NULL) {
+        cout << "transplant 1" << endl;
         root = v;
     }
     //if current is left child
     else if(current == current->parent->getLeft()) {
-        current->parent->setLeft(v);
+        cout << "transplant 2" << endl;
+        v = current->parent->getRight(); 
+        //current->parent->setLeft(v);
     }
     //if current is right child
     else {
-        current->parent->setRight(v));
+        cout << "transplant 3" << endl;
+        v = current->parent->getRight();
+        //current->parent->setRight(v);
+    }
+    cout << "transplant 4" << endl;
+    if(v == NULL) {
+        cout << "v is null" << endl;
     }
     v->parent = current->parent; 
+    cout << "current val" << current->getValue() << endl;
+    cout << "exit transplant" << endl;
 }
 
 void print(node* root, int count) {
@@ -423,3 +533,4 @@ bool search(int searched, node* root) {
         node* right = root->getRight();
         return(search(searched, right)); 
     }
+}
