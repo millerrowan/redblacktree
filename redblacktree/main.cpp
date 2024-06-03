@@ -9,13 +9,17 @@ void insert(node* &root, node* p, node* current, int data);
 void insertFix(node* &root, node* current);
 void rotateRight(node* &root, node* p);
 void rotateLeft(node* &root, node* p); 
-void deletion(node* &root, node* current, int n);
+void deletion(node* &root, node* current, node* parent, int n);
 void deleteFix(node* &root,node* current);
 node* minimum(node* current); 
 void print(node* root, int count);
 bool search(int searched, node* root);
 void transplant(node* &root, node* current, node* v); 
 
+/* Red black tree is a data structure that organizes nodes into a tree with 
+data values and they all have color
+Author: Rowan Miller
+06/03/24 */
 
 int main() {
     bool stillPlaying = true;
@@ -67,7 +71,7 @@ int main() {
         if(strcmp(input, "DELETE")==0) {
             cout << "what number would you like to delete?" << endl; 
             cin >> n; 
-            deletion(root, root, n);
+            deletion(root, root, root, n);
         }
         if(strcmp(input, "SEARCH")==0) {
         
@@ -242,112 +246,168 @@ void insertFix(node* &root, node* current) {
     
 }
 
-//programiz
-void deletion(node* &root, node* current, int n) { //0 is red, 1 is black
+void deletion(node* &root, node* current, node* parent, int n) { //0 is red, 1 is black
     cout << "deleting" << n << endl;
   
-    if(root == NULL) {
-        cout << "there is nothing to delete" << endl;
-        return; 
+   if(root == NULL) {
+        cout << "tree is empty" << endl;
+        return;
     }
-    if(n < current->getValue()) {
-        cout << "left" << endl;
-        return deletion(root, current->getLeft(), n);
-    }
-    else if(n > current->getValue()) {
-        cout << "right" << endl;
-        return deletion(root, current->getRight(), n);
-    }
-    //if the current value == the value to be deleted
-    else {
-        cout << "current valee = n" << endl;
-        node* y = current; 
-        int originalColor = current->getColor();
-        node* x;
+   /* if(search(n, root) == false) {
+        cout << "this number is not in the tree" << endl;
+        return;
+    } */ 
+    cout << "test " << endl;
+    //int originalColor = current->getColor();
+    if(current->getValue() == n) {
+        cout << "test2" << endl;
+        //case 1: if the node is a leaf
+        if(current->getRight()==NULL && current->getLeft() == NULL) {
+            //now you need to check where the node is located
+            cout << "current: " << current << endl;
+            //if the node is a root
+            if(root->getValue()==n){
+                cout << "root" << endl;
+                root = NULL;
+            }
+            //if node is a right child
+            if(current->getValue() > parent->getValue()) {
+                cout << "current is a right child" << endl;
+                parent->setRight(NULL); 
+            }
+            //if node is a left child
+            if(current->getValue() < parent->getValue()) {
+                cout << "current is a left child" << endl;
+                parent->setLeft(NULL);
+            }
+            return;
+        }
+        //case 2: if the node has one child
+        //if node has a left child
+        if(current->getRight() == NULL && current->getLeft() != NULL) {
+            //if current is a left child 
+            cout<<"node has a left child" << endl;
+            //transplant(root, current, current->getLeft());
+            if(current->getValue() < parent->getValue()) {
+                cout << "current is a left child" << endl;
+                node* temp = current->getLeft();
+                 parent->setLeft(temp);
+                 deleteFix(root, current->getLeft());
+                 delete current; 
+            }
+            //if current is a right child
+            if(current->getValue() > parent->getValue()) {
+                cout << "current is a right child" << endl;
+                node* temp = current->getLeft();
+                parent->setRight(temp);
+                deleteFix(root, current->getLeft());
+                delete current;
+            }
+    
+            return; 
+        }
+         //if node has a right child
+        if(current->getRight() != NULL && current->getLeft() == NULL) {
+            //if current is a left child 
+            cout << "node has a right child" << endl;
+            if(current->getValue() < parent->getValue()) {
+                cout << "current is a left child" << endl;
+                node* temp = current->getRight(); 
+                 parent->setLeft(temp);
+                 deleteFix(root, current->getRight());
+                 delete current; 
+            }
+            //if current is a right child
+            if(current->getValue() > parent->getValue()) {
+                cout << "current is a right child" << endl;
+                node* temp = current->getRight();
+                parent->setRight(temp);
+                cout << "current: " << current->getValue();
+                deleteFix(root, current->getRight());
+                delete current;
+            }
+            //deleteFix(root, current);
+            return; 
+        }
+            
+        //case 3: if the node has two children
+        if(current->getRight() != NULL && current->getLeft() != NULL) {
+            node* temp = current->getRight();
+            node* temptwo = current;
+            node* tempthree = minimum(root->getRight());
+            deleteFix(root, tempthree);
+            while(temp->getLeft() != NULL) {
+                temptwo = temp;
+                temp = temp->getLeft(); 
+            }
+            if(temptwo != current) {
+                temptwo->setLeft(temp->getRight());
+            }
+            else{
+                temptwo->setRight(temp->getRight());
+                
+            }
+            current->setValue(temp->getValue());
+            delete temp;
+            return;
+            
+        }
         
-        //if current's left is NULL
-        if(current->getLeft() == NULL) { //you checked that current and x don't equal null
-            cout << "current left is null" << endl;
-            x = current->getRight(); 
-            cout << "hi" << endl;
-            if(x == NULL) {
-                cout << "x is NULL" << endl;
-            }
-            transplant(root, current, x);//current is replaced with x
-            current->parent->setLeft(NULL); 
-            cout << "after transplant" << endl;
-            //cout << "root: " << root->getValue() << "current: " << current->getValue() << "x: " << x->getValue() << endl;
-        }
-        //if current's right is NULL
-        else if(current->getRight() == NULL) {
-            cout << "current right is null" << endl; 
-            x = current->getLeft(); 
-            //current->setLeft(x);
-            transplant(root, current, x); //current is replaced with x
-            current->parent->setRight(NULL);
-        }
-        //if current's left and right are not NULL
-        else {
-            cout << "currents right and left are not null" << endl;
-            y = minimum(current->getRight()); //y is smallest element is subtree
-            originalColor = y->getColor();
-            x = y->getRight(); 
-            cout << "yvalue: " << y->getValue();
-            cout << "xvalue: " << x->getValue();
-            
-            
-            if(y->parent == current) { //if y's parent == the node to be deleted
-                cout << "y's parent is current" << endl; 
-                x->parent = y;
-            }
-            
-            else {
-                cout << "else" << endl; 
-                transplant(root, y, y->getRight());
-                y->setRight(current->getRight());
-                y->getRight()->parent = y;
-            }
-            
-            cout << "here" << endl;
-            transplant(root, current, y);
-            y->setLeft(current->getLeft());
-            y->getLeft()->parent = y;
-            y->setColor(current->getColor()); 
-        }
-        
-        if(originalColor == 1) {
-            cout << "original color is black" << endl;
-            deleteFix(root, x);
-        }
     }
-  
+    //recursive cases
+    //move to right
+    if(current->getValue() < n) {
+        cout << "moving to right" << endl;
+        deletion(root, current->getRight(), current, n);
+    
+    }
+    //move to left
+    else if(current->getValue() > n) {
+        cout << "moving to left" << endl;
+        deletion(root, current->getLeft(), current, n);
+    }
 }
 
 //rebalances tree after deletion and fixes coloring 
+//credit: programiz
 void deleteFix(node* &root, node* current) {
     cout << "delete fix" << endl;
-    node* w = NULL; 
+    node* w; 
     while(current != root && current->getColor() != 1) {
-        if(current = current->parent->getLeft()) {
-            current->parent->setRight(w);
-            if(current->parent->getRight()->getColor() == 0) {
+        cout << "while current is black and isn't root" << endl;
+        cout << "current value" << current->getValue() << endl;
+        cout << "current parent" << current->parent->getValue() << endl;
+        //cout << "current parent right" << current->parent->getRight()->getValue() << endl;
+        if(current == current->parent->getLeft()) {
+            cout << "current is the left child" << endl;
+            w = current->parent->getRight(); 
+            if(w == NULL) {
+                current->setColor(1);
+                return;
+            }
+            else if(current->parent->getRight()->getColor() == 0) {
+                cout << "currents parents right is black" << endl;
                 current->parent->getRight()->setColor(1);
                 current->parent->setColor(0); 
                 rotateLeft(root, current->parent);
                 current->parent->setRight(w);
             }
             
-            if(w->getRight()->getColor() == 1 && w->getLeft()->getColor() == 1) {
+            else if(w->getRight()->getColor() == 1 && w->getLeft()->getColor() == 1) {
+                cout << "ws right and left are black" << endl;
                 w->setColor(0);
                 current = current->parent; 
             }
             else{
+                cout << "else left" << endl;
                 if(w->getRight()->getColor() == 1) {
+                    cout << "ws right is black" << endl;
                     w->getLeft()->setColor(1);
                     w->setColor(0);
                     rotateRight(root, w);
                     current->parent->setRight(w);
                 }
+                cout << "else left2" << endl;
                 w->setColor(current->parent->getColor());
                 current->parent->parent->setColor(1);
                 w->getRight()->setColor(1);
@@ -357,26 +417,36 @@ void deleteFix(node* &root, node* current) {
             }
             
         }
-        else if(current = current->parent->getRight()) {
-            current->parent->setLeft(w);
-            if(current->parent->getLeft()->getColor() == 0) {
+        else if(current == current->parent->getRight()) {
+            cout << "current is right child" << endl;
+            w = current->parent->getLeft();
+            if(w == NULL) {
+                current->setColor(1);
+                return;
+            }
+            else if(current->parent->getLeft()->getColor() == 0) {
+                cout << "currents parent left child is red" << endl;
                 current->parent->getLeft()->setColor(1);
                 current->parent->setColor(0); 
                 rotateRight(root, current->parent);
                 current->parent->setLeft(w);
             }
             
-            if(w->getLeft()->getColor() == 1 && w->getRight()->getColor() == 1) {
+            else if(w->getLeft()->getColor() == 1 && w->getRight()->getColor() == 1) {
+                cout << "ws left and right are black" << endl;
                 w->setColor(0);
                 current = current->parent; 
             }
             else{
+                cout << "else right" << endl;
                 if(w->getLeft()->getColor() == 1) {
+                    cout << "ws left is black" << endl;
                     w->getRight()->setColor(1);
                     w->setColor(0);
                     rotateLeft(root, w);
                     current->parent->setLeft(w);
                 }
+                cout << "else right2" << endl;
                 w->setColor(current->parent->getColor());
                 current->parent->parent->setColor(1);
                 w->getLeft()->setColor(1);
@@ -388,8 +458,10 @@ void deleteFix(node* &root, node* current) {
         }
         
         current->setColor(1);
+        cout << "end delete fix" << endl;
         
     }    
+    cout << "out of while loop" << endl;
     
     
 }
@@ -467,6 +539,10 @@ node* minimum(node* current) {
 
 void transplant(node* &root, node* current, node* v) {
     cout << "transplant" << endl;
+    cout << "current" << current->getValue() << endl;
+    if(v != NULL) {
+        cout << "v" << v->getValue() << endl;
+    }
     if(current->parent == NULL) {
         cout << "transplant 1" << endl;
         root = v;
